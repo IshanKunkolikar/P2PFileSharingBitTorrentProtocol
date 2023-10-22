@@ -65,7 +65,6 @@ public class PeerProcess {
          }
       }
       return content;
-
    }
 
    //adding peer details to the peer map
@@ -114,7 +113,7 @@ public class PeerProcess {
 
    //setting the file name for the common config file
    public static void setcommonCfgFileName(String line) {
-      commonCfgFileName = line.split("")[1];
+      commonCfgFileName = line.split(" ")[1];
    }
 
    //setting the file size
