@@ -3,7 +3,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -13,11 +15,15 @@ import java.io.File;
 import java.io.FileReader;
 
 public class PeerProcess {
-
+   //declaring constants
    public static final String CURR_DIRECTORY = System.getProperty("user.dir");
    public static final String COMMON_CONFIG = "Common.cfg";
    public static final String PEER_INFO_CONFIG = "PeerInfo.cfg";
 
+   //data structures
+   private static Map<Integer, Peer> peerMap = new LinkedHashMap<>();
+
+   //methods for reading a file
    public static boolean isValidFilePath(String path) {
       return path != null && path.length() > 0;
    }
@@ -53,6 +59,34 @@ public class PeerProcess {
 
    }
 
+   //methods for parsing the peer file
+   public static void addPeerInfo(int portNo, boolean fileExists, int id, String host) {
+      Peer peerData = new Peer(portNo, fileExists, id, host);
+      peerMap.put(id, peerData);
+  }
+
+   public static void parseLine(String line) {
+      String[] values = line.split(" ");
+      addPeerInfo(Integer.parseInt(values[0]), Integer.parseInt(values[1]) == 1, Integer.parseInt(values[2]), values[3]);
+  }
+   
+  public static void parsePeerData(List<String> lines) {
+      for(String line : lines) {
+          parseLine(line);
+      }
+  }
+
+  //fetching peer data from the peer map
+  public Peer fetchPeer(int id) {
+      return peerMap.get(id);
+   }
+
+   //Returning all peers as a peer map
+   public Map<Integer, Peer> getPeers() {
+      return peerMap;
+   }
+
+   //methods for building directory
    private static void createPeerDirectory(int peerId, String currDir) {
       try {
           String peerPath = Paths.get(currDir, String.format("peer_%d", peerId)).toString();
@@ -86,8 +120,7 @@ public class PeerProcess {
 
          // Read PeerInfo.cfg
          List<String> dataPeerCfg = readFile(PEER_INFO_CONFIG);
-         PeerInfoCfg peerInfoCfgFile = new PeerInfoCfg();
-         peerInfoCfgFile.parse(dataPeerCfg);
+         PeerProcess.parsePeerData(dataPeerCfg);
 
         // Read Common.cfg
         List<String> dataCommonCfg = readFile(COMMON_CONFIG);
