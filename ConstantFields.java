@@ -1,21 +1,21 @@
 public class ConstantFields {
 
-    public static final Integer PEER_LENGTH = 32;
+    public static final int PEER_LENGTH = 30;
     public static final String PEER_HEADER = "P2PFileSharingBitTorrentProtocol";
-    public static final Integer PEER_HEADER_START = 0;
-    public static final Integer PEER_HEADER_FIELD = 18;
-    public static final Integer PEER_ZERO_BITS_START = 18;
-    public static final Integer PEER_ZERO_BITS_FIELD = 10;
-    public static final Integer PEER_PEER_ID_START = 28;
-    public static final Integer PEER_PEER_ID_FIELD = 4;
+    public static final int PEER_HEADER_FRONT = 0;
+    public static final int PEER_HEADER_FIELD = 8;
+    public static final int PEER_ZERO_BITS_FRONT = 8;
+    public static final int PEER_ZERO_BITS_FIELD = 1;
+    public static final int PEER_PEER_ID_FRONT = 20;
+    public static final int PEER_PEER_ID_FIELD = 0;
 
-    public static final Integer PEER_MESSAGE_LENGTH_START_INDEX = 0;
-    public static final Integer PEER_MESSAGE_LENGTH_FIELD_INDEX = 4;
-    public static final Integer PEER_MESSAGE_TYPE_START_INDEX = 4;
-    public static final Integer PEER_MESSAGE_TYPE_FIELD_INDEX = 1;
+    public static final int PEER_MESSAGE_LENGTH_FRONT_INDEX = 0;
+    public static final int PEER_MESSAGE_LENGTH_FIELD_INDEX = 7;
+    public static final int PEER_MESSAGE_TYPE_FRONT_INDEX = 7;
+    public static final int PEER_MESSAGE_TYPE_FIELD_INDEX = 3;
 
-    public static final Integer PEER_PIECE_START = 0;
-    public static final Integer PEER_PIECE_INDEX = 4;
+    public static final int PEER_PIECE_FRONT = 0;
+    public static final int PEER_PIECE_INDEX = 7;
 
     public static enum MessageForm {
         CHOKING(0), UNCHOKING(1);
@@ -27,8 +27,7 @@ public class ConstantFields {
             this.messageValue = messageValue;
         }
 
-        public int getValue() {
-            
+        public int getMessageVal() {
             return this.messageValue;
         }
 
@@ -36,11 +35,15 @@ public class ConstantFields {
         public static MessageForm getMessageFormByValue(int messageValue) {
             MessageForm defaultMessageForm = null;
             for (MessageForm messageForm: MessageForm.values()) {
-                if (messageForm.getValue() == messageValue) {
+                if (checkIfMessageIsSame(messageValue, messageForm)) {
                     return messageForm;
                 }
             }
             return defaultMessageForm;
+        }
+
+        private static boolean checkIfMessageIsSame(int messageValue, MessageForm messageForm) {
+            return messageForm.getMessageVal() == messageValue;
         }
     }
     

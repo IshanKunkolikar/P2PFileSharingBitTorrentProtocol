@@ -81,10 +81,14 @@ public class PeerNode {
     public List<Integer> sortPeerBasedOnDownloadRate() {
         List<Map.Entry<Integer, Integer>> sortedDownloadingSpeedMap = getSortedDownloadingSpeedMap();
         List<Integer> orderedPeersBasedOnSpeed = new ArrayList<>();
+        populatePeersOnDownloadRate(sortedDownloadingSpeedMap, orderedPeersBasedOnSpeed);
+        return orderedPeersBasedOnSpeed;
+    }
+
+    private static void populatePeersOnDownloadRate(List<Map.Entry<Integer, Integer>> sortedDownloadingSpeedMap, List<Integer> orderedPeersBasedOnSpeed) {
         for(Map.Entry<Integer, Integer> entry : sortedDownloadingSpeedMap) {
             orderedPeersBasedOnSpeed.add(entry.getKey());
         }
-        return orderedPeersBasedOnSpeed;
     }
 
     // sorts the neighbors according to download rate

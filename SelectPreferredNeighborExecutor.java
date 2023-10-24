@@ -4,9 +4,9 @@ import java.util.Set;
 public class SelectPreferredNeighborExecutor implements Runnable {
     public int peerId;
 
-    int CHOKE = 0;
+    int CHOKEPEER = 0;
 
-    int UNCHOKE = 1;
+    int UNCHOKEPEER = 1;
 
     private PeerNode peerNode;
 
@@ -26,18 +26,30 @@ public class SelectPreferredNeighborExecutor implements Runnable {
         this.peerNode.selectNeighborAgain();
         //get the preferred neighboring peers
         Set<Integer> preferredNeighboringPeers = this.peerNode.getPreferredNeighboringPeers();
+        //validate neighbor peer type
+        validatePeerNeighbors();
+    }
 
-        for (Map.Entry<Integer, TorrentService> entry : peerNode.getPeerTorrentService().entrySet()) {
-            Integer peerId = entry.getKey();
-            TorrentService torrentService = entry.getValue();
-            if (checkIfPeerIsNeighbor(peerId)) {
-                torrentService.pingNeighborWithMessage(ConstantFields.MessageForm.UNCHOKING);
-            } else if (checkIfPeerIsOptimisticNeighbor(peerId)) {
-                continue;
-            } else {
-                torrentService.pingNeighborWithMessage(ConstantFields.MessageForm.CHOKING);
-            }
+    private void validatePeerNeighbors() {
+        for (Map.Entry<Integer, TorrentService> peerEntry : getPeerEntries()) {
+            int peerId = peerEntry.getKey();
+            TorrentService torrentService = peerEntry.getValue();
+            validateExtractedPeers(peerId, torrentService);
         }
+    }
+
+    private void validateExtractedPeers(int peerId, TorrentService torrentService) {
+        if (checkIfPeerIsNeighbor(peerId)) {
+            torrentService.pingNeighborWithMessage(ConstantFields.MessageForm.UNCHOKING);
+        } else if (checkIfPeerIsOptimisticNeighbor(peerId)) {
+            return;
+        } else {
+            torrentService.pingNeighborWithMessage(ConstantFields.MessageForm.CHOKING);
+        }
+    }
+
+    private Set<Map.Entry<Integer, TorrentService>> getPeerEntries() {
+        return peerNode.getPeerTorrentService().entrySet();
     }
 
     //checks if the thread is interrupted

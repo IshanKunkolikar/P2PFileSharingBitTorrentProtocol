@@ -21,13 +21,13 @@ public class TorrentService implements Runnable {
 
     ScheduledExecutorService scheduledThreadPoolExecutor;
 
-    String bitfieldData;
-    String fileDataPieces;
+    String bitfieldValue;
+    String fileValuePieces;
 
     //constricts and initializes peers and schedulers
     public TorrentService(int peerNode1Id, int peerNode2Id, PeerNode peerNode1, PeerNode peerNode2, Socket torrentSocket, ExecutorService fixedThreadPoolExecutor,
                           ScheduledExecutorService scheduledThreadPoolExecutor, OutputStream outputChannel,
-                          String bitfieldData, String fileDataPieces) throws IOException {
+                          String bitfieldValue, String fileValuePieces) throws IOException {
         this.peerNode1Id = peerNode1Id;
         this.peerNode1 = peerNode1;
         this.peerNode2Id = peerNode2Id;
@@ -35,8 +35,8 @@ public class TorrentService implements Runnable {
         this.torrentSocket = torrentSocket;
         this.fixedThreadPoolExecutor = fixedThreadPoolExecutor;
         this.scheduledThreadPoolExecutor = scheduledThreadPoolExecutor;
-        this.bitfieldData = bitfieldData;
-        this.fileDataPieces = fileDataPieces;
+        this.bitfieldValue = bitfieldValue;
+        this.fileValuePieces = fileValuePieces;
         this.inputChannel = this.torrentSocket.getInputStream();
         this.outputChannel = this.torrentSocket.getOutputStream();
     }
@@ -68,7 +68,7 @@ public class TorrentService implements Runnable {
         byte[] messageData = getNewByte(messageTextLength);
         int messageCounter = combineMsg2InMsg1(messageData, convertIntegerToByteCollection(messageTextLength), 0);
         messageCounter = messageCounter+1;
-        messageData[messageCounter] = (byte) messageType.getValue();
+        messageData[messageCounter] = (byte) messageType.getMessageVal();
         if (checkIfMessageLengthIsValid(messageTextLength)) {
             combineMsg2InMsg1(messageData, messageContentPayload, messageCounter);
         }
