@@ -23,6 +23,7 @@ public class PeerNode {
 
     private final Map<Integer, Integer> downloadingSpeedMap = new ConcurrentHashMap<>();
 
+
     private final Set<Integer> preferredNeighboringPeers = ConcurrentHashMap.newKeySet();
 
     private final Set<Integer> interestedNeighboringPeers = ConcurrentHashMap.newKeySet();
@@ -140,6 +141,10 @@ public class PeerNode {
         return this.peerTorrentServices;
     }
 
+    public TorrentService getPeerTorrentService(int pId) {
+        return this.peerTorrentServices.get(pId);
+    }
+
     //adding new peer service
     public void addPeerTorrentService(int peerId, TorrentService torrentService) {
         try {
@@ -148,6 +153,6 @@ public class PeerNode {
         } catch (Exception excep) {
             excep.printStackTrace();
         }
-
     }
+
 }

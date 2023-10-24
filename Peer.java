@@ -1,3 +1,6 @@
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class Peer {
     private int portNo;
     private boolean fileExists;
@@ -28,10 +31,16 @@ public class Peer {
         return host;
     }
 
+    private Map<Integer, Peer> completePeerMapping = new LinkedHashMap<>();
+
     public String fetchDetails() {
         return "portNo-" + portNo + "\n" +
                "fileExists-"+ fileExists + "\n" +
                "id-" + id + "\n" +
                "host-" + host + "\n";             
+    }
+
+    public Map<Integer, Peer> getCompletePeerMapping() {
+        return this.completePeerMapping;
     }
 }
