@@ -38,14 +38,14 @@ public class PeerNode {
         this.scheduledThreadPoolExecutor = scheduledThreadPoolExecutor;
         this.prefNeighborsCount = prefNeighborsCount;
     }
-    
+
     //re-selecting preferred neighbors every p seconds
     public void selectNeighborAgain() {
         // Resetting the un-choked peer
         resetUnchockedPeer();
 
         //iterate over the download rates and initialize downloadingSpeedMap
-        for (int pId : downloadingSpeedMap.keySet()){
+        for (int pId : downloadingSpeedMap.keySet()) {
             this.downloadingSpeedMap.put(pId, 0);
         }
 
@@ -53,7 +53,7 @@ public class PeerNode {
     }
 
     // Select prefNeighborsCount with highest download speed and are interested in peer data
-    public void selectprefNeighborsCount(){
+    public void selectprefNeighborsCount() {
         // get the download rates of each peer and sort the peer in descending download rate order
         List<Integer> sortedPeersBasedOnDownloadRate = sortPeerBasedOnDownloadRate();
 
@@ -61,15 +61,20 @@ public class PeerNode {
         int i = 0;
         while (pnCount < prefNeighborsCount && i < this.interestedNeighboringPeers.size()) {
             int currentPeerNode = sortedPeersBasedOnDownloadRate.get(i);
-            if (checkIfInterestedNeighborHasCurrentPeer(currentPeerNode)) {
-                this.preferredNeighboringPeers.add(currentPeerNode);
-                pnCount++;
+            try{
+                if (checkIfInterestedNeighborHasCurrentPeer(currentPeerNode)) {
+                    this.preferredNeighboringPeers.add(currentPeerNode);
+                    pnCount++;
+                }
+            }
+            catch(Exception excep){
+                excep.printStackTrace();
             }
             i++;
         }
     }
 
-    public boolean checkIfInterestedNeighborHasCurrentPeer(int currentPeerNode){
+    public boolean checkIfInterestedNeighborHasCurrentPeer(int currentPeerNode) {
         return this.interestedNeighboringPeers.contains(currentPeerNode);
     }
 
@@ -78,23 +83,33 @@ public class PeerNode {
         this.preferredNeighboringPeers.clear();
     }
 
+    //sorting peers based on their download rates
     public List<Integer> sortPeerBasedOnDownloadRate() {
         List<Map.Entry<Integer, Integer>> sortedDownloadingSpeedMap = getSortedDownloadingSpeedMap();
         List<Integer> orderedPeersBasedOnSpeed = new ArrayList<>();
-        populatePeersOnDownloadRate(sortedDownloadingSpeedMap, orderedPeersBasedOnSpeed);
+        try {
+            populatePeersOnDownloadRate(sortedDownloadingSpeedMap, orderedPeersBasedOnSpeed);
+        } catch (Exception excep) {
+            excep.printStackTrace();
+        }
         return orderedPeersBasedOnSpeed;
+
     }
 
     private static void populatePeersOnDownloadRate(List<Map.Entry<Integer, Integer>> sortedDownloadingSpeedMap, List<Integer> orderedPeersBasedOnSpeed) {
-        for(Map.Entry<Integer, Integer> entry : sortedDownloadingSpeedMap) {
+        for (Map.Entry<Integer, Integer> entry : sortedDownloadingSpeedMap) {
             orderedPeersBasedOnSpeed.add(entry.getKey());
         }
     }
 
     // sorts the neighbors according to download rate
-    public List<Map.Entry<Integer, Integer>> getSortedDownloadingSpeedMap(){
+    public List<Map.Entry<Integer, Integer>> getSortedDownloadingSpeedMap() {
         List<Map.Entry<Integer, Integer>> sortedDownloadingSpeedMap = new ArrayList<>(downloadingSpeedMap.entrySet());
-        sortedDownloadingSpeedMap.sort(Map.Entry.comparingByValue());
+        try {
+            sortedDownloadingSpeedMap.sort(Map.Entry.comparingByValue());
+        } catch (Exception excep) {
+            excep.printStackTrace();
+        }
         return sortedDownloadingSpeedMap;
     }
 
@@ -103,8 +118,8 @@ public class PeerNode {
     }
 
     //increment the interested neighbor
-    public int checkInterestedNeighborCount(int currentPeerNode){
-        return this.prefNeighborsCount +1;
+    public int checkInterestedNeighborCount(int currentPeerNode) {
+        return this.prefNeighborsCount + 1;
     }
 
     // reset the peer count
@@ -127,7 +142,12 @@ public class PeerNode {
 
     //adding new peer service
     public void addPeerTorrentService(int peerId, TorrentService torrentService) {
-        this.peerTorrentServices.put(peerId, torrentService);
-        this.downloadingSpeedMap.put(peerId, 0);
+        try {
+            this.peerTorrentServices.put(peerId, torrentService);
+            this.downloadingSpeedMap.put(peerId, 0);
+        } catch (Exception excep) {
+            excep.printStackTrace();
+        }
+
     }
 }

@@ -4,9 +4,9 @@ import java.util.Set;
 public class SelectPreferredNeighborExecutor implements Runnable {
     public int peerId;
 
-    int CHOKEPEER = 0;
+    int CHOKEDPEER = 0;
 
-    int UNCHOKEPEER = 1;
+    int UNCHOKEDPEER = 1;
 
     private PeerNode peerNode;
 
@@ -15,7 +15,7 @@ public class SelectPreferredNeighborExecutor implements Runnable {
         this.peerNode = peerNode;
     }
 
-    public boolean checkIfThreadIsNotInterrupted(){
+    public boolean checkIfThreadIsNotInterrupted() {
         return !Thread.currentThread().isInterrupted();
     }
 
@@ -30,22 +30,34 @@ public class SelectPreferredNeighborExecutor implements Runnable {
         validatePeerNeighbors();
     }
 
+    //check each neighbor type
     private void validatePeerNeighbors() {
-        for (Map.Entry<Integer, TorrentService> peerEntry : getPeerEntries()) {
-            int peerId = peerEntry.getKey();
-            TorrentService torrentService = peerEntry.getValue();
-            validateExtractedPeers(peerId, torrentService);
+        try {
+            for (Map.Entry<Integer, TorrentService> peerEntry : getPeerEntries()) {
+                int peerId = peerEntry.getKey();
+                TorrentService torrentService = peerEntry.getValue();
+                validateExtractedPeers(peerId, torrentService);
+            }
+        } catch (Exception excep) {
+            excep.printStackTrace();
         }
+
     }
 
+    //send unchoke message is peer is neighbor else choke the peer
     private void validateExtractedPeers(int peerId, TorrentService torrentService) {
-        if (checkIfPeerIsNeighbor(peerId)) {
-            torrentService.pingNeighborWithMessage(ConstantFields.MessageForm.UNCHOKING);
-        } else if (checkIfPeerIsOptimisticNeighbor(peerId)) {
-            return;
-        } else {
-            torrentService.pingNeighborWithMessage(ConstantFields.MessageForm.CHOKING);
+        try {
+            if (checkIfPeerIsNeighbor(peerId)) {
+                torrentService.pingNeighborWithMessage(ConstantFields.MessageForm.UNCHOKING);
+            } else if (checkIfPeerIsOptimisticNeighbor(peerId)) {
+                return;
+            } else {
+                torrentService.pingNeighborWithMessage(ConstantFields.MessageForm.CHOKING);
+            }
+        } catch (Exception excep) {
+            excep.printStackTrace();
         }
+
     }
 
     private Set<Map.Entry<Integer, TorrentService>> getPeerEntries() {
@@ -53,17 +65,31 @@ public class SelectPreferredNeighborExecutor implements Runnable {
     }
 
     //checks if the thread is interrupted
-    public boolean checkIfThreadIsInterrupted(){
+    public boolean checkIfThreadIsInterrupted() {
         return Thread.currentThread().isInterrupted();
     }
 
     //checks if the given peer Id is a neighbor
-    public boolean checkIfPeerIsNeighbor(int peerId){
+    public boolean checkIfPeerIsNeighbor(int peerId) {
         return peerNode.getPreferredNeighboringPeers().contains(peerId);
     }
 
     //checks if the given peer id is a optimistic neighbor
-    public boolean checkIfPeerIsOptimisticNeighbor(int peerId){
+    public boolean checkIfPeerIsOptimisticNeighbor(int peerId) {
         return peerNode.getOptimisticNeighboringPeer().get() == peerId;
+    }
+
+    public boolean checkExistanceOfNeighbors(int peerId) {
+        boolean answer = false;
+        try {
+            for (Map.Entry<Integer, TorrentService> peerEntry : getPeerEntries()) {
+               if(peerEntry.getKey() == peerId){
+                   answer = true;
+               }
+            }
+        } catch (Exception excep) {
+            excep.printStackTrace();
+        }
+        return answer;
     }
 }

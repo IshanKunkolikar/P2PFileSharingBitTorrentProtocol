@@ -34,14 +34,20 @@ public class ConstantFields {
         public MessageForm defaultMessageForm = null;
         public static MessageForm getMessageFormByValue(int messageValue) {
             MessageForm defaultMessageForm = null;
-            for (MessageForm messageForm: MessageForm.values()) {
-                if (checkIfMessageIsSame(messageValue, messageForm)) {
-                    return messageForm;
+            try{
+                for (MessageForm messageForm: MessageForm.values()) {
+                    if (checkIfMessageIsSame(messageValue, messageForm)) {
+                        return messageForm;
+                    }
                 }
+            }
+            catch(Exception excep){
+                excep.printStackTrace();
             }
             return defaultMessageForm;
         }
 
+        ///validates if messageValue and MessageForm is same
         private static boolean checkIfMessageIsSame(int messageValue, MessageForm messageForm) {
             return messageForm.getMessageVal() == messageValue;
         }

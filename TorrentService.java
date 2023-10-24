@@ -55,11 +55,15 @@ public class TorrentService implements Runnable {
     public void pingNeighborWithMessage(ConstantFields.MessageForm messageForm) {
         try {
             this.fixedThreadPoolExecutor.execute(
-                    new TorrentMessenger(this.torrentSocket.getOutputStream(), getMessageText(messageForm, new byte[0]))
+                    createNewTorrentMessenger(messageForm)
             );
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private TorrentMessenger createNewTorrentMessenger(ConstantFields.MessageForm messageForm) throws IOException {
+        return new TorrentMessenger(this.torrentSocket.getOutputStream(), getMessageText(messageForm, new byte[0]));
     }
 
     // gets the message
@@ -75,10 +79,12 @@ public class TorrentService implements Runnable {
         return messageData;
     }
 
+    //combines message length index, message type index and message size to a byte array
     private static byte[] getNewByte(int messageTextLength) {
         return new byte[ConstantFields.PEER_MESSAGE_LENGTH_FIELD_INDEX + ConstantFields.PEER_MESSAGE_TYPE_FIELD_INDEX + messageTextLength];
     }
 
+    //valiate the message length
     public static boolean checkIfMessageLengthIsValid(int messageTextLength){
         return messageTextLength>0;
     }
