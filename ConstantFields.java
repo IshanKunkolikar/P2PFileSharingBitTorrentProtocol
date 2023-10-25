@@ -6,6 +6,7 @@ import java.util.Iterator;
 
 public class ConstantFields {
 
+    //defines the constants for the peer block
     public static final int PEER_LENGTH = 30;
     public static final String PEER_HEADER = "P2PFileSharingBitTorrentProtocol";
     public static final int PEER_HEADER_FRONT = 0;
@@ -28,8 +29,8 @@ public class ConstantFields {
 
         private final int messageValue;
 
+        //initializes the message type
         private MessageForm(int messageValue) {
-            
             this.messageValue = messageValue;
         }
 
@@ -38,6 +39,8 @@ public class ConstantFields {
         }
 
         public MessageForm defaultMessageForm = null;
+
+        //returns the type of message
         public static MessageForm getMessageFormByValue(int messageValue) {
             MessageForm defaultMessageForm = null;
             try{

@@ -63,6 +63,7 @@ public class SelectPreferredNeighborExecutor implements Runnable {
 
     }
 
+    //returns the peers entries from the torrent service
     private Set<Map.Entry<Integer, TorrentService>> getPeerEntries() {
         return peerNode.getPeerTorrentService().entrySet();
     }
@@ -82,6 +83,7 @@ public class SelectPreferredNeighborExecutor implements Runnable {
         return peerNode.getOptimisticNeighboringPeer().get() == peerId;
     }
 
+    // checks if the given neighbor exists in the torrent
     public boolean checkExistanceOfNeighbors(int peerId) {
         boolean answer = false;
         try {

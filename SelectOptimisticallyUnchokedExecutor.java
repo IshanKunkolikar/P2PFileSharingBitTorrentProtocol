@@ -11,6 +11,7 @@ public class SelectOptimisticallyUnchokedExecutor implements Runnable {
     Peer peer;
     Random createRandom;
 
+    //constructs the executor and initializes peer node
     public SelectOptimisticallyUnchokedExecutor(int id, PeerNode peerNode, Peer peer) {
         this.peerId = id;
         this.peerNode = peerNode;
@@ -34,6 +35,7 @@ public class SelectOptimisticallyUnchokedExecutor implements Runnable {
         return optimistic;
     }
 
+    //checks the chokedPeerNodes and set them as unchoked
     public void confirmUnchokedPeer(List<Integer> chokedPeerNodes , int optimistic)
     {
         try {
@@ -49,6 +51,7 @@ public class SelectOptimisticallyUnchokedExecutor implements Runnable {
         }
     }
 
+    //sets the optimistic node as unchoked
     public void setUnchokedNode(int optimistic){
         // get torrent service from the optimistic neighbour
         TorrentService TorrentService = peerNode.getPeerTorrentService(optimistic);
@@ -85,17 +88,20 @@ abstract class Piece implements Delayed {
 
     private int prevIndex;
 
+    //constructs the data block piece
     public Piece(int val) {
         this.currIndex = val;
         this.prevIndex = -1;
         this.createTime = LocalDateTime.now();
     }
 
+    // updates the indexes of the piece block
     public void newIndex(int val){
         this.prevIndex = this.currIndex;
         this.currIndex = val;
     }
 
+    //fetches the currrent piece block index
     public int getCurrIndex() {
         return currIndex;
     }

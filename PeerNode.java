@@ -78,10 +78,12 @@ public class PeerNode {
         }
     }
 
+    //checks if the interested neighbors have current peer
     public boolean checkIfInterestedNeighborHasCurrentPeer(int currentPeerNode) {
         return this.interestedNeighboringPeers.contains(currentPeerNode);
     }
 
+    //resets the unchoked peer object
     private void resetUnchockedPeer() {
         //clearing the downloading rates and list of un-choked peers
         this.preferredNeighboringPeers.clear();
@@ -100,6 +102,7 @@ public class PeerNode {
 
     }
 
+    //populates the peers based on their download rates
     private static void populatePeersOnDownloadRate(List<Map.Entry<Integer, Integer>> sortedDownloadingSpeedMap, List<Integer> orderedPeersBasedOnSpeed) {
         for (Map.Entry<Integer, Integer> entry : sortedDownloadingSpeedMap) {
             orderedPeersBasedOnSpeed.add(entry.getKey());
@@ -117,6 +120,7 @@ public class PeerNode {
         return sortedDownloadingSpeedMap;
     }
 
+    //fetches preferred neighbors
     public Set<Integer> getPreferredNeighboringPeers() {
         return this.preferredNeighboringPeers;
     }
@@ -132,18 +136,22 @@ public class PeerNode {
         this.preferredNeighboringPeers.clear();
     }
 
+    //sets a neighbor as optimistic neighbor
     public void setOptimisticNeighboringPeer(int neighboringPeer) {
         this.optimisticNeighboringPeer.set(neighboringPeer);
     }
 
+    // fetches the optimistic neighbor and returns the same
     public AtomicInteger getOptimisticNeighboringPeer() {
         return this.optimisticNeighboringPeer;
     }
 
+    //fetches the current service
     public Map<Integer, TorrentService> getPeerTorrentService() {
         return this.peerTorrentServices;
     }
 
+    //fetches the service for given peer id
     public TorrentService getPeerTorrentService(int pId) {
         return this.peerTorrentServices.get(pId);
     }

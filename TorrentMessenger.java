@@ -12,6 +12,7 @@ public class TorrentMessenger implements Runnable {
         this.messageContent = messageContent;
     }
 
+    //processes the messaging
     @Override
     public void run() {
         try {

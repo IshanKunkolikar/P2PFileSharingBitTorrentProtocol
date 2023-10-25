@@ -63,6 +63,7 @@ public class TorrentService implements Runnable {
         }
     }
 
+    //creates new torrent messager
     private TorrentMessenger createNewTorrentMessenger(ConstantFields.MessageForm messageForm) throws IOException {
         return new TorrentMessenger(this.torrentSocket.getOutputStream(), getMessageText(messageForm, new byte[0]));
     }
