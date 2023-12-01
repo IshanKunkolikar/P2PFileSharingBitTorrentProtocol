@@ -7,26 +7,29 @@ import java.util.Iterator;
 public class ConstantFields {
 
     //defines the constants for the peer block
-    public static final int PEER_LENGTH = 30;
-    public static final String PEER_HEADER = "P2PFileSharingBitTorrentProtocol";
-    public static final int PEER_HEADER_FRONT = 0;
-    public static final int PEER_HEADER_FIELD = 8;
-    public static final int PEER_ZERO_BITS_FRONT = 8;
-    public static final int PEER_ZERO_BITS_FIELD = 1;
-    public static final int PEER_PEER_ID_FRONT = 20;
-    public static final int PEER_PEER_ID_FIELD = 0;
+    public static final int HEADER_LENGTH = 32;
+    public static final String HEADER = "P2PFileSharingBitTorrentProtocol";
+    public static final int HEADER_FRONT = 0;
+    public static final int HEADER_FIELD = 18;
+    public static final int PEER_ZERO_BITS_FIELD = 10;
+    public static final int PEER_ID_FIELD = 4;
+    public static final int PEER_ZERO_BITS_FRONT = 10;
+    public static final int PEER_ID_FRONT = 28;
 
-    public static final int PEER_MESSAGE_LENGTH_FRONT_INDEX = 0;
-    public static final int PEER_MESSAGE_LENGTH_FIELD_INDEX = 7;
-    public static final int PEER_MESSAGE_TYPE_FRONT_INDEX = 7;
-    public static final int PEER_MESSAGE_TYPE_FIELD_INDEX = 3;
+    public static final int MESSAGE_LENGTH_FRONT_INDEX = 0;
+    public static final int MESSAGE_LENGTH_FIELD_INDEX = 4;
+    public static final int MESSAGE_TYPE_FRONT_INDEX = 4;
+    public static final int MESSAGE_TYPE_FIELD_INDEX = 1;
 
-    public static final int PEER_PIECE_FRONT = 0;
-    public static final int PEER_PIECE_INDEX = 7;
+    public static final int PIECE_FRONT = 0;
+    public static final int PIECE_INDEX = 4;
+
+    public static final String WORKING_LOC = System.getProperty("user.dir");
+
 
     public static enum MessageForm {
-        CHOKING(0), UNCHOKING(1);
-
+        CHOKE(0), UNCHOKE(1), INTERESTED(2), NOT_INTERESTED(3),
+        HAVE(4), BITFIELD(5), REQUEST(6), PIECE(7), COMPLETED(8);
         private final int messageValue;
 
         //initializes the message type
@@ -37,8 +40,6 @@ public class ConstantFields {
         public int getMessageVal() {
             return this.messageValue;
         }
-
-        public MessageForm defaultMessageForm = null;
 
         //returns the type of message
         public static MessageForm getMessageFormByValue(int messageValue) {

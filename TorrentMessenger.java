@@ -21,8 +21,8 @@ public class TorrentMessenger implements Runnable {
             synchronized(outputChannel) {
                 outputChannel.write(this.messageContent);
             }
-        } catch (Exception e){
-            e.printStackTrace();
+        } catch (Exception excep){
+            excep.printStackTrace();
         }
     }
 }

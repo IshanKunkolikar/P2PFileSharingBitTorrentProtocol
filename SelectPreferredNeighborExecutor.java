@@ -1,3 +1,8 @@
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Set;
 import java.util.ArrayList;
@@ -13,14 +18,16 @@ public class SelectPreferredNeighborExecutor implements Runnable {
 
     private PeerNode peerNode;
 
+    Logger LOGGER = LogManager.getLogger(TorrentService.class);
+
     public SelectPreferredNeighborExecutor(int peerId, PeerNode peerNode) {
         this.peerId = peerId;
         this.peerNode = peerNode;
     }
 
-    public boolean checkIfThreadIsNotInterrupted() {
-        return !Thread.currentThread().isInterrupted();
-    }
+//    public boolean checkIfThreadIsNotInterrupted() {
+//        return !Thread.currentThread().isInterrupted();
+//    }
 
     @Override
     public void run() {
@@ -29,8 +36,14 @@ public class SelectPreferredNeighborExecutor implements Runnable {
         this.peerNode.selectNeighborAgain();
         //get the preferred neighboring peers
         Set<Integer> preferredNeighboringPeers = this.peerNode.getPreferredNeighboringPeers();
+        LOGGER.info("{}: Peer {} has the preferred neighbors {}", fetchCurrTime(), this.peerId, preferredNeighboringPeers);
+
         //validate neighbor peer type
         validatePeerNeighbors();
+    }
+
+    public static String fetchCurrTime() {
+        return DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss").format(LocalDateTime.now());
     }
 
     //check each neighbor type
@@ -51,11 +64,11 @@ public class SelectPreferredNeighborExecutor implements Runnable {
     private void validateExtractedPeers(int peerId, TorrentService torrentService) {
         try {
             if (checkIfPeerIsNeighbor(peerId)) {
-                torrentService.pingNeighborWithMessage(ConstantFields.MessageForm.UNCHOKING);
+                torrentService.pingNeighborWithMessage(ConstantFields.MessageForm.UNCHOKE);
             } else if (checkIfPeerIsOptimisticNeighbor(peerId)) {
                 return;
             } else {
-                torrentService.pingNeighborWithMessage(ConstantFields.MessageForm.CHOKING);
+                torrentService.pingNeighborWithMessage(ConstantFields.MessageForm.CHOKE);
             }
         } catch (Exception excep) {
             excep.printStackTrace();

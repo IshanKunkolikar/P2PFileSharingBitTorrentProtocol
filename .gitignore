@@ -1,10 +1,9 @@
 
-TorrentService.class
-TorrentMessenger.class
-SelectPreferredNeighborExecutor.class
-SelectOptimisticallyUnchokedExecutor.class
-Piece.class
-PeerProcess.class
-PeerNode.class
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
 peer_1001/tree.jpg
 peer_1001/tree.jpg

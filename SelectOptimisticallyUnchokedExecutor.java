@@ -1,3 +1,8 @@
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import java.util.concurrent.Delayed;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -8,14 +13,16 @@ import java.util.concurrent.TimeUnit;
 public class SelectOptimisticallyUnchokedExecutor implements Runnable {
     int peerId;
     PeerNode peerNode;
-    Peer peer;
+    Map<Integer, Peer> dataPeerCfg;
     Random createRandom;
 
+    Logger LOGGER = LogManager.getLogger(TorrentService.class);
+
     //constructs the executor and initializes peer node
-    public SelectOptimisticallyUnchokedExecutor(int id, PeerNode peerNode, Peer peer) {
+    public SelectOptimisticallyUnchokedExecutor(int id, PeerNode peerNode, Map<Integer, Peer> dataPeerCfg) {
         this.peerId = id;
         this.peerNode = peerNode;
-        this.peer = peer;
+        this.dataPeerCfg = dataPeerCfg;
         createRandom = new Random();
     }
 
@@ -26,13 +33,17 @@ public class SelectOptimisticallyUnchokedExecutor implements Runnable {
             if (!chokedPeerNodes.isEmpty()) {
                 optimistic = chokedPeerNodes.get(createRandom.nextInt(chokedPeerNodes.size()));
                 peerNode.setOptimisticNeighboringPeer(optimistic);
-
+                LOGGER.info("{}: Peer {} has the optimistically unchoked neighbor {}", fetchCurrTime(), this.peerId, optimistic);
             }
         } catch (Exception excep) {
             excep.printStackTrace();
         }
 
         return optimistic;
+    }
+
+    public static String fetchCurrTime() {
+        return DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss").format(LocalDateTime.now());
     }
 
     //checks the chokedPeerNodes and set them as unchoked
@@ -55,7 +66,7 @@ public class SelectOptimisticallyUnchokedExecutor implements Runnable {
     public void setUnchokedNode(int optimistic){
         // get torrent service from the optimistic neighbour
         TorrentService TorrentService = peerNode.getPeerTorrentService(optimistic);
-        TorrentService.pingNeighborWithMessage(ConstantFields.MessageForm.UNCHOKING);
+        TorrentService.pingNeighborWithMessage(ConstantFields.MessageForm.UNCHOKE);
     }
 
     @Override
@@ -67,7 +78,7 @@ public class SelectOptimisticallyUnchokedExecutor implements Runnable {
         List<Integer> chokedPeerNodes = new ArrayList<>();
 
         try {
-            for (int i : this.peer.getCompletePeerMapping().keySet()) {
+            for (int i : this.dataPeerCfg.keySet()) {
                 if ((!peerNode.getPreferredNeighboringPeers().contains(i)))
                     chokedPeerNodes.add(i);
             }

@@ -25,13 +25,6 @@ public class PeerProcess {
     public static final String PEER_INFO_CONFIG = "PeerInfo.cfg";
 
     public static Map<Integer, Peer> peerMap = new LinkedHashMap<>();
-    public static int prefNeighborsCount;
-    public static int pieceCount;
-    public static int unchokingTime;
-    public static int optUnchokingTime;
-    public static String commonCfgFileName;
-    public static int sizeOfFile;
-    public static int sizeOfPiece;
 
     //checking if the input path provided is valid
     public static boolean isValidFilePath(String path) {
@@ -100,65 +93,10 @@ public class PeerProcess {
         return peerMap;
     }
 
-    //setting the prefNeighborsCount
-    public static void setPrefNeighborsCount(String line) {
-        prefNeighborsCount = extractValue(line);
-    }
 
-    //setting the unchoking time interval
-    public static void setUnchokingTime(String line) {
-        unchokingTime = extractValue(line);
-    }
 
-    //setting the optimistic unhocking time interval
-    public static void setOptUnchokingTime(String line) {
-        optUnchokingTime = extractValue(line);
-    }
 
-    //setting the file name for the common config file
-    public static void setcommonCfgFileName(String line) {
-        commonCfgFileName = line.split(" ")[1];
-    }
 
-    //setting the file size
-    public static void setFileSize(String line) {
-        sizeOfFile = extractValue(line);
-    }
-
-    //setting the piece size
-    public static void setPieceSize(String line) {
-        sizeOfPiece = extractValue(line);
-    }
-
-    //computing the piece count using file and piece size
-    public static void calculatePieceCount() {
-        double sizeOfFileInDouble = (double) sizeOfFile;
-        double sizeOfPieceInDouble = (double) sizeOfPiece;
-        pieceCount = (int) Math.ceil(sizeOfFileInDouble / sizeOfPieceInDouble);
-    }
-
-    //extracting the value from the config line by splitting it by " "
-    public static int extractValue(String line) {
-        return Integer.parseInt(line.split(" ")[1]);
-    }
-
-    //checking if the common config file has any lines
-    public static boolean isValidConfig(List<String> configLines) {
-        return configLines != null && configLines.size() == 6;
-    }
-
-    //parsing the common config file data
-    public static void parseCommonCfgData(List<String> configLines) {
-        if (isValidConfig(configLines)) {
-            setPrefNeighborsCount(configLines.get(0));
-            setUnchokingTime(configLines.get(1));
-            setOptUnchokingTime(configLines.get(2));
-            setcommonCfgFileName(configLines.get(3));
-            setFileSize(configLines.get(4));
-            setPieceSize(configLines.get(5));
-            calculatePieceCount();
-        }
-    }
 
     //creating the peer directory having peer id and current directory
     public static void createPeerDirectory(int peerId, String currDir) {
@@ -191,14 +129,13 @@ public class PeerProcess {
 
     //implementing concurrency
 
-    private static void initializePeerAndSchedulers(int peerId, List<String> dataPeerCfg, List<String> dataCommonCfg) {
-        if (peerId!=0){
-           return;
-        }
+    private static void initializePeerAndSchedulers(int peerId, Map<Integer, Peer> dataPeerCfg,  CommonConfig dataCommonCfg) {
         ExecutorService fixedThreadPoolExecutor = createFixedThreadPool(8);
         ScheduledExecutorService scheduledThreadPoolExecutor = createScheduledThreadPool(8);
-        PeerNode peerNode = new PeerNode(peerId, dataCommonCfg, dataPeerCfg, fixedThreadPoolExecutor, scheduledThreadPoolExecutor, prefNeighborsCount);
-        scheduledThreadPoolExecutor.scheduleAtFixedRate(new SelectPreferredNeighborExecutor(peerId, peerNode), 0L, unchokingTime, TimeUnit.SECONDS);
+        PeerNode peerNode = new PeerNode(peerId, dataCommonCfg, dataPeerCfg, fixedThreadPoolExecutor, scheduledThreadPoolExecutor, dataCommonCfg.getPrefNeighborsCount());
+        scheduledThreadPoolExecutor.scheduleAtFixedRate(new SelectPreferredNeighborExecutor(peerId, peerNode), 0L, dataCommonCfg.getUnchokingTime(), TimeUnit.SECONDS);
+        scheduledThreadPoolExecutor.scheduleAtFixedRate(new SelectOptimisticallyUnchokedExecutor(peerId, peerNode, dataPeerCfg), 0L, dataCommonCfg.getOptUnchokingTime(), TimeUnit.SECONDS);
+        scheduledThreadPoolExecutor.scheduleAtFixedRate(new HandlePiecesRequestedScheduler(peerNode), 0L, 30, TimeUnit.SECONDS);
     }
 
     //intializing ExecutorService
@@ -219,15 +156,18 @@ public class PeerProcess {
         PeerProcess.parsePeerData(dataPeerCfg);
 
         List<String> dataCommonCfg = readFile(COMMON_CONFIG);
-        PeerProcess.parseCommonCfgData(dataCommonCfg);
+//        PeerProcess.parseCommonCfgData(dataCommonCfg);
+//        List<String> commonCfgLines = readFileObject.read(Constants.COMMON_CONFIG_FILE_NAME);
+        CommonConfig commonConfig = new CommonConfig();
+        commonConfig.parseCommonCfgData(dataCommonCfg);
 
         try {
-            buildDirectory(commonCfgFileName, CURR_DIRECTORY, PeerProcess.fetchPeer(peerId));
-        } catch (Exception e) {
-            e.printStackTrace();
+            buildDirectory(commonConfig.getCommonCfgFileName(), CURR_DIRECTORY, PeerProcess.fetchPeer(peerId));
+        } catch (Exception excep) {
+            excep.printStackTrace();
         }
 
-        PeerProcess.initializePeerAndSchedulers(peerId, dataPeerCfg, dataCommonCfg);
+        PeerProcess.initializePeerAndSchedulers(peerId, peerMap, commonConfig);
     }
 
 }
