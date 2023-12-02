@@ -1,6 +1,3 @@
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,6 +13,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.concurrent.TimeUnit;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -104,11 +105,6 @@ public class PeerProcess {
         return peerMap;
     }
 
-
-
-
-
-
     //creating the peer directory having peer id and current directory
     public static void createPeerDirectory(int peerId, String currDir) {
         try {
@@ -139,11 +135,11 @@ public class PeerProcess {
     }
 
     //implementing concurrency
-
     private static void initializePeerAndSchedulers(int peerId, Map<Integer, Peer> dataPeerCfg,  CommonConfig dataCommonCfg) {
         ExecutorService fixedThreadPoolExecutor = createFixedThreadPool(8);
         ScheduledExecutorService scheduledThreadPoolExecutor = createScheduledThreadPool(8);
         PeerNode peerNode = new PeerNode(peerId, dataCommonCfg, dataPeerCfg, fixedThreadPoolExecutor, scheduledThreadPoolExecutor, dataCommonCfg.getPrefNeighborsCount());
+        System.out.println("peerNode--"+peerNode+" peerId--"+peerId);
         scheduledThreadPoolExecutor.scheduleAtFixedRate(new SelectPreferredNeighborExecutor(peerId, peerNode), 0L, dataCommonCfg.getUnchokingTime(), TimeUnit.SECONDS);
         scheduledThreadPoolExecutor.scheduleAtFixedRate(new SelectOptimisticallyUnchokedExecutor(peerId, peerNode, dataPeerCfg), 0L, dataCommonCfg.getOptUnchokingTime(), TimeUnit.SECONDS);
         scheduledThreadPoolExecutor.scheduleAtFixedRate(new HandlePiecesRequestedScheduler(peerNode), 0L, 30, TimeUnit.SECONDS);
@@ -168,11 +164,10 @@ public class PeerProcess {
         PeerProcess.parsePeerData(dataPeerCfg);
 
         List<String> dataCommonCfg = readFile(COMMON_CONFIG);
-//        PeerProcess.parseCommonCfgData(dataCommonCfg);
-//        List<String> commonCfgLines = readFileObject.read(Constants.COMMON_CONFIG_FILE_NAME);
         CommonConfig commonConfig = new CommonConfig();
         commonConfig.parseCommonCfgData(dataCommonCfg);
         commonConfig.printCommonConfig();
+        
         try {
             buildDirectory(commonConfig.getCommonCfgFileName(), CURR_DIRECTORY, PeerProcess.fetchPeer(peerId));
         } catch (Exception excep) {
@@ -180,6 +175,14 @@ public class PeerProcess {
         }
 
         PeerProcess.initializePeerAndSchedulers(peerId, peerMap, commonConfig);
+
+        ExecutorService executorService = Executors.newFixedThreadPool(8);
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(8);
+
+        PeerNode peer = new PeerNode(peerId, commonConfig, peerMap, executorService, scheduler, commonConfig.getPrefNeighborsCount());
+        scheduler.scheduleAtFixedRate(new SelectPreferredNeighborExecutor(peerId, peer), 0L, commonConfig.getUnchokingTime(), TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(new SelectOptimisticallyUnchokedExecutor(peerId, peer, peerMap), 0L, commonConfig.getOptUnchokingTime(), TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(new HandlePiecesRequestedScheduler(peer), 0L, 30, TimeUnit.SECONDS);
     }
 
 }
