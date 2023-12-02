@@ -1,3 +1,6 @@
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.List;
 
 public class CommonConfig {
@@ -37,6 +40,8 @@ public class CommonConfig {
     String commonCfgFileName;
     int sizeOfFile;
     int sizeOfPiece;
+
+    Logger LOGGER = LogManager.getLogger(TorrentService.class);
 
     //setting the prefNeighborsCount
     public void setPrefNeighborsCount(String line) {
@@ -96,5 +101,16 @@ public class CommonConfig {
             setPieceSize(configLines.get(5));
             calculatePieceCount();
         }
+    }
+
+    public void printCommonConfig(){
+        LOGGER.info("\nCommon Info Configuration:~");
+
+        LOGGER.info("Number of Preferred Neighbors: {}", getPrefNeighborsCount());
+        LOGGER.info("Unchoking Interval: {}", getUnchokingTime());
+        LOGGER.info("Optimistic Unchoking Interval: {}", getOptUnchokingTime());
+        LOGGER.info("File Name: {}", getCommonCfgFileName());
+        LOGGER.info("File Size: {}", getSizeOfFile());
+        LOGGER.info("Piece Size: {}\n", getSizeOfPiece());
     }
 }
