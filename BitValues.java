@@ -92,7 +92,7 @@ public class BitValues {
     //adding the pieces requested in queue
     public void addingInPiecesReq(int pieceIndex) {
         this.piecesReq.add(pieceIndex);
-        // this.piecesReqQueue.add(new Piece(pieceIndex));
+         this.piecesReqQueue.add(new Piece(pieceIndex));
     }
 
 }
