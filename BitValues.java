@@ -22,31 +22,38 @@ public class BitValues {
         this.pieceCount = this.commonConfig.getPieceCount();
     }
 
+    //lock on reading file
     public void readLock() {
         this.lockOnread.lock();
     }
 
+    //removing lock on reading file
     public void readUnlock() {
         this.lockOnread.unlock();
     }
 
+    //get the bit field value
     public BitSet getBitval() {
         return this.bitval;
     }
 
+    //method to return if all the pieces have been received
     public boolean allPiecesReceived() {
         int nextClearIndex = bitval.nextClearBit(0);
         return nextClearIndex == -1 || nextClearIndex >= pieceCount;
     }
 
+    //method to remove just piece that has timed out based on index of that piece
     public void removeTimedOutPiece(int index) {
         this.piecesReq.remove(index);
     }
 
+    //fetching the delay queue of pieces
     public DelayQueue<Piece> fetchDelayInQueue() {
         return this.piecesReqQueue;
     }
 
+    //method to check for interest in a peerbit
     public boolean hasInterest(BitSet peerBit) {
         try {
             this.lockOnread.lock();
@@ -56,6 +63,7 @@ public class BitValues {
         }
     }
 
+    //method to fetch the index of the next interested piece
     public int fetchIndexOfNextInterestedPiece(BitSet peerBit) {
         for (int i = peerBit.nextSetBit(0); i != -1; i = peerBit.nextSetBit(i + 1)) {
             //If the piece is already present or requested::
@@ -70,6 +78,7 @@ public class BitValues {
         return -1;
     }
 
+    //setting the index of the received piece
     public void settingRecdPieceIndex(int index) {
         try {
             this.lockOnWrite.lock();
@@ -80,6 +89,7 @@ public class BitValues {
         }
     }
 
+    //adding the pieces requested in queue
     public void addingInPiecesReq(int pieceIndex) {
         this.piecesReq.add(pieceIndex);
         // this.piecesReqQueue.add(new Piece(pieceIndex));
