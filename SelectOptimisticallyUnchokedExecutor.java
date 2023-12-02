@@ -79,15 +79,25 @@ public class SelectOptimisticallyUnchokedExecutor implements Runnable {
 
         try {
             for (int i : this.dataPeerCfg.keySet()) {
-                if ((!peerNode.getPreferredNeighboringPeers().contains(i)))
+                if ((!peerNode.getPreferredNeighboringPeers().contains(i)) && (peerNode.retrieveInterestedNeighboringPeers().contains(i)))
                     chokedPeerNodes.add(i);
             }
         } catch (Exception excep) {
             excep.printStackTrace();
         }
 
-        int optimistic = ChooseUnchokedPeer(chokedPeerNodes);
-        confirmUnchokedPeer(chokedPeerNodes, optimistic);
-
+//        int optimistic = ChooseUnchokedPeer(chokedPeerNodes);
+//        confirmUnchokedPeer(chokedPeerNodes, optimistic);
+        try {
+            if(chokedPeerNodes.size() > 0) {
+                int optimisticNeighbor = chokedPeerNodes.get(createRandom.nextInt(chokedPeerNodes.size()));
+                peerNode.setOptimisticNeighboringPeer(optimisticNeighbor);
+                LOGGER.info("{}: Peer {} has the optimistically unchoked neighbor {}", fetchCurrTime(), this.peerId, optimisticNeighbor);
+                TorrentService torrentService = peerNode.getPeerTorrentService(optimisticNeighbor);
+                torrentService.pingNeighborWithMessage(ConstantFields.MessageForm.UNCHOKE);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
