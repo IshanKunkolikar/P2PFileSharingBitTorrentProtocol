@@ -1,3 +1,6 @@
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,6 +21,8 @@ import java.util.List;
 import java.util.Random;
 
 public class PeerProcess {
+
+    static Logger LOGGER = LogManager.getLogger(TorrentService.class);
 
     //declaring constants
     public static final String CURR_DIRECTORY = System.getProperty("user.dir");
@@ -66,6 +71,11 @@ public class PeerProcess {
 
     //adding peer details to the peer map
     public static void addPeerInfo(int portNo, boolean fileExists, int id, String host) {
+        LOGGER.info("id: {}", id);
+        LOGGER.info("port number: {}", portNo);
+        LOGGER.info("hostname: {}", host);
+        LOGGER.info("fileExists: {}", fileExists);
+
         Peer peerData = new Peer(portNo, fileExists, id, host);
         peerMap.put(id, peerData);
     }
@@ -78,6 +88,7 @@ public class PeerProcess {
 
     //parsing the config data from the peer config file
     public static void parsePeerData(List<String> configLines) {
+        LOGGER.info("Peer Configuration:~");
         for (String line : configLines) {
             parsePeerLine(line);
         }
@@ -149,6 +160,7 @@ public class PeerProcess {
     }
 
     public static void main(String[] peerProcessArguments) {
+
         //Getting the peer id from arguments
         int peerId = Integer.parseInt(peerProcessArguments[0]);
 
@@ -160,7 +172,7 @@ public class PeerProcess {
 //        List<String> commonCfgLines = readFileObject.read(Constants.COMMON_CONFIG_FILE_NAME);
         CommonConfig commonConfig = new CommonConfig();
         commonConfig.parseCommonCfgData(dataCommonCfg);
-
+        commonConfig.printCommonConfig();
         try {
             buildDirectory(commonConfig.getCommonCfgFileName(), CURR_DIRECTORY, PeerProcess.fetchPeer(peerId));
         } catch (Exception excep) {
