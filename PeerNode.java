@@ -35,6 +35,7 @@ public class PeerNode {
     private final PeerNodeServer peerNodeServer;
     private final PeerNodeClient peerNodeClient;
     private final Set<Integer> completedPeerNodes = new HashSet<>();
+    private final BitValues bitValues;
 
     //constructs a peer node
     public PeerNode(int peerId, CommonConfig dataCommonCfg, Map<Integer, Peer> dataPeerCfg, ExecutorService fixedThreadPoolExecutor, ScheduledExecutorService scheduledThreadPoolExecutor, int prefNeighborsCount) {
@@ -46,7 +47,12 @@ public class PeerNode {
         this.prefNeighborsCount = prefNeighborsCount;
         this.fileValuePieces = new FileValuePieces(this.peerId, this.dataCommonCfg);
 //        Set all of the values in the bitfield (whose size is equal to the number of pieces) to True if the peer has a file and Cut the file into fragments.
-        initializeBitfields();
+        BitSet bitfield = new BitSet(this.dataCommonCfg.getPieceCount());
+        if (this.dataPeerCfg.get(this.peerId).isFileExisting()) {
+            bitfield.set(0, dataCommonCfg.getPieceCount());
+            this.fileValuePieces.divideFileIntoChunks();
+        }
+        this.bitValues = new BitValues(dataCommonCfg, bitfield);
         // Start peer node server and client
         this.peerNodeServer = new PeerNodeServer();
         this.fixedThreadPoolExecutor.execute(this.peerNodeServer);
@@ -58,15 +64,6 @@ public class PeerNode {
                 this.completedPeerNodes.add(peer.fetchPeerId());
             }
         }
-    }
-
-    public void initializeBitfields(){
-        BitSet bitfield = new BitSet(this.dataCommonCfg.getPieceCount());
-        if (this.dataPeerCfg.get(this.peerId).isFileExisting()) {
-            bitfield.set(0, dataCommonCfg.getPieceCount());
-            this.fileValuePieces.divideFileIntoChunks();
-        }
-//        this.bitfield = new Bitfield(bitfield, dataCommonCfg);
     }
 
     //re-selecting preferred neighbors every p seconds
@@ -200,6 +197,10 @@ public class PeerNode {
         this.interestedNeighboringPeers.add(peerId);
     }
 
+    public BitValues getBitValues() {
+        return this.bitValues;
+    }
+
     public Map<Integer, BitSet> getPeerBitfields() {
         return this.peerBitfields;
     }
@@ -222,9 +223,9 @@ public class PeerNode {
     public boolean allPeersComplete() {
         Set<Integer> peerIds = this.dataPeerCfg.keySet();
         // Check if the current peer has received all the pieces
-//        if (bitfield.receivedAllPieces()) {
-//            peerIds.remove(peerId);
-//        }
+        if (bitValues.allPiecesReceived()) {
+            peerIds.remove(peerId);
+        }
         // Check if all the remaining peers have received the file
         peerIds.removeAll(completedPeerNodes);
         return peerIds.size() == 0;
@@ -270,7 +271,7 @@ public class PeerNode {
                         return;
                     }
                     Socket socket = serverNodeSocket.accept();
-//                    PeerNode.this.fixedThreadPoolExecutor.execute(new TorrentService(peerId, PeerNode.this, socket, PeerNode.this.fixedThreadPoolExecutor, PeerNode.this.scheduledThreadPoolExecutor, PeerNode.this.bitfield, PeerNode.this.fileValuePieces));
+                    PeerNode.this.fixedThreadPoolExecutor.execute(new TorrentService(peerId, PeerNode.this, socket, PeerNode.this.fixedThreadPoolExecutor, PeerNode.this.scheduledThreadPoolExecutor, PeerNode.this.bitValues, PeerNode.this.fileValuePieces));
                 }
             } catch (Exception excep) {
                  excep.printStackTrace();
@@ -295,7 +296,7 @@ public class PeerNode {
                     while (socket == null) {
                         socket = new Socket(peer.fetchHost(), peer.fetchPortNo());
                     }
-//                    PeerNode.this.fixedThreadPoolExecutor.execute(new TorrentService(peerId, PeerNode.this, peer.fetchPeerId(), socket, PeerNode.this.fixedThreadPoolExecutor, PeerNode.this.scheduledThreadPoolExecutor, PeerNode.this.bitfield, PeerNode.this.fileValuePieces));
+                    PeerNode.this.fixedThreadPoolExecutor.execute(new TorrentService(peerId, PeerNode.this, peer.fetchPeerId(), socket, PeerNode.this.fixedThreadPoolExecutor, PeerNode.this.scheduledThreadPoolExecutor, PeerNode.this.bitValues, PeerNode.this.fileValuePieces));
                 } catch (Exception excep) {
                     excep.printStackTrace();
                 }

@@ -28,7 +28,7 @@ public class TorrentService implements Runnable {
 
     ScheduledExecutorService scheduledThreadPoolExecutor;
 
-    String bitfieldValue;
+    BitValues bitfieldValue;
     FileValuePieces fileValuePieces;
     boolean startedHandshake = false;
     boolean isChoked = true;
@@ -37,13 +37,26 @@ public class TorrentService implements Runnable {
     Logger LOGGER = LogManager.getLogger(TorrentService.class);
 
     //constricts and initializes peers and schedulers
-    public TorrentService(int peerNode1Id, int peerNode2Id, PeerNode peerNode1, PeerNode peerNode2, Socket torrentSocket, ExecutorService fixedThreadPoolExecutor,
-                          ScheduledExecutorService scheduledThreadPoolExecutor, OutputStream outputChannel,
-                          String bitfieldValue, FileValuePieces fileValuePieces) throws IOException {
+    public TorrentService(int peerNode1Id, PeerNode peerNode1, Socket torrentSocket, ExecutorService fixedThreadPoolExecutor,
+                          ScheduledExecutorService scheduledThreadPoolExecutor,
+                          BitValues bitfieldValue, FileValuePieces fileValuePieces) throws IOException {
+        this.peerNode1Id = peerNode1Id;
+        this.peerNode1 = peerNode1;
+        this.torrentSocket = torrentSocket;
+        this.fixedThreadPoolExecutor = fixedThreadPoolExecutor;
+        this.scheduledThreadPoolExecutor = scheduledThreadPoolExecutor;
+        this.bitfieldValue = bitfieldValue;
+        this.fileValuePieces = fileValuePieces;
+        this.inputChannel = this.torrentSocket.getInputStream();
+        this.outputChannel = this.torrentSocket.getOutputStream();
+    }
+
+    public TorrentService(int peerNode1Id, PeerNode peerNode1, int peerNode2Id, Socket torrentSocket, ExecutorService fixedThreadPoolExecutor,
+                          ScheduledExecutorService scheduledThreadPoolExecutor,
+                          BitValues bitfieldValue, FileValuePieces fileValuePieces) throws IOException {
         this.peerNode1Id = peerNode1Id;
         this.peerNode1 = peerNode1;
         this.peerNode2Id = peerNode2Id;
-        this.peerNode2 = peerNode2;
         this.torrentSocket = torrentSocket;
         this.fixedThreadPoolExecutor = fixedThreadPoolExecutor;
         this.scheduledThreadPoolExecutor = scheduledThreadPoolExecutor;
@@ -136,21 +149,21 @@ public class TorrentService implements Runnable {
         byte[] pieceByteArray = inputChannel.readNBytes(messageLength - ConstantFields.PIECE_INDEX);
         LOGGER.info("{}: Peer {} has downloaded the piece {} from {}", fetchCurrTime(), this.peerNode1Id, pieceIndex, this.peerNode2Id);
         this.fileValuePieces.saveFilePiece(pieceIndex, pieceByteArray);
-//        bitfield.setReceivedPieceIndex(pieceIndex);
+        bitfieldValue.settingRecdPieceIndex(pieceIndex);
         peerNode1.incrementDownloadRate(this.peerNode2Id);
         broadcastHave(pieceIndex);
         // verify if the peer node is still interested in data
-//        if (!bitfield.isInterested(peerBitfield)) {
-//            sendNotInterested();
-//        }
+        if (!bitfieldValue.hasInterest(peerBitfield)) {
+            sendNotInterested();
+        }
         // Check if the node has downloaded rhe complete file
-//        if (bitfield.receivedAllPieces()) {
-//            this.filePieces.joinPiecesintoFile();
+        if (bitfieldValue.allPiecesReceived()) {
+            this.fileValuePieces.joinPiecesintoFile();
             LOGGER.info("{}: Peer {} has downloaded the complete file", fetchCurrTime(), this.peerNode1Id);
             broadcastCompleted();
-//        } else {
+        } else {
             passRequest();
-//        }
+        }
     }
 
     // handles broadcasting on complete file receival
@@ -210,9 +223,9 @@ public class TorrentService implements Runnable {
         this.peerBitfield = peerBitfield;
         this.peerNode1.updateBitField(this.peerNode2Id, this.peerBitfield);
         // Send interested message
-//        if (this.bitfield.isInterested(this.peerBitfield)) {
-//            sendInterested();
-//        }
+        if (this.bitfieldValue.hasInterest(this.peerBitfield)) {
+            sendInterested();
+        }
     }
 
     // handles INTERESTED message
@@ -224,11 +237,11 @@ public class TorrentService implements Runnable {
     private void handleHave(int messageSize) throws IOException {
         int pieceIndex = byteArrToInteger(inputChannel.readNBytes(messageSize));
         LOGGER.info("{}: Peer {} received the 'have' message from {}", fetchCurrTime(), this.peerNode1Id, this.peerNode2Id);
-//        this.peerBitfield.set(pieceIndex);
+        this.peerBitfield.set(pieceIndex);
         // Check if the node is interested in the peer data
-//        if(this.bitfield.isInterested(this.peerBitfield)) {
-//            this.fixedThreadPoolExecutor.execute(new TorrentMessenger(this.outputChannel, getMessageText(ConstantFields.MessageForm.INTERESTED, null)));
-//        }
+        if(this.bitfieldValue.hasInterest(this.peerBitfield)) {
+            this.fixedThreadPoolExecutor.execute(new TorrentMessenger(this.outputChannel, getMessageText(ConstantFields.MessageForm.INTERESTED, null)));
+        }
     }
 
     // handles NOTINTERESTED message
@@ -259,15 +272,15 @@ public class TorrentService implements Runnable {
     // handles file requests
     private void passRequest() {
         // Send request only for the unchoked node
-//        if (!this.isChoked) {
-//            int nextInterestedPieceIndex = bitfield.getNextInterestedPieceIndex(peerBitfield);
-//            if (nextInterestedPieceIndex != -1) {
-//                bitfield.addToRequestedPieces(nextInterestedPieceIndex);
-//                fixedThreadPoolExecutor.execute(new TorrentMessenger(this.outputChannel, getMessageText(ConstantFields.MessageForm.REQUEST, integerToByteArray(nextInterestedPieceIndex))));
-//            } else {
-//                sendNotInterested();
-//            }
-//        }
+        if (!this.isChoked) {
+            int nxtInterestedPieceIdx = bitfieldValue.fetchIndexOfNextInterestedPiece(peerBitfield);
+            if (nxtInterestedPieceIdx != -1) {
+                bitfieldValue.addingInPiecesReq(nxtInterestedPieceIdx);
+                fixedThreadPoolExecutor.execute(new TorrentMessenger(this.outputChannel, getMessageText(ConstantFields.MessageForm.REQUEST, integerToByteArray(nxtInterestedPieceIdx))));
+            } else {
+                sendNotInterested();
+            }
+        }
     }
 
     // sends Not interested message
@@ -277,15 +290,15 @@ public class TorrentService implements Runnable {
 
     // sends BitField message
     private void sendBitfield() {
-//        try {
-//            this.bitfield.readLock();
-//            byte[] bitfield = this.bitfield.getBitfield().toByteArray();
-//            this.executorService.execute(new MessageSender(this.outputStream, Helper.getMessage(Constants.MessageType.BITFIELD, bitfield)));
-//        } catch (Exception excep) {
-//            excep.printStackTrace();
-//        } finally {
-//            this.bitfield.readUnlock();
-//        }
+        try {
+            this.bitfieldValue.readLock();
+            byte[] bitfield = this.bitfieldValue.getBitval().toByteArray();
+            this.fixedThreadPoolExecutor.execute(new TorrentMessenger(this.outputChannel, getMessageText(ConstantFields.MessageForm.BITFIELD, bitfield)));
+        } catch (Exception excep) {
+            excep.printStackTrace();
+        } finally {
+            this.bitfieldValue.readUnlock();
+        }
     }
 
     private void handshakeReceival() throws Exception {

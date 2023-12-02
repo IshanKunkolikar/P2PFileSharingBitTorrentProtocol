@@ -5,11 +5,11 @@ import java.util.concurrent.DelayQueue;
 
 public class HandlePiecesRequestedScheduler implements Runnable {
     private PeerNode peerNode;
-//    private final Bitfield bitfield;
+    private final BitValues bitfieldValue;
 
     public HandlePiecesRequestedScheduler(PeerNode peerNode) {
         this.peerNode = peerNode;
-//        this.bitfield = peer.getBitfield();
+        this.bitfieldValue = peerNode.getBitValues();
     }
 
     @Override
@@ -19,24 +19,24 @@ public class HandlePiecesRequestedScheduler implements Runnable {
                 return;
             }
 
-//            DelayQueue<Piece> piecesRequested = bitfield.getDelayQueue();
-//            Piece expiredPieceIndex = piecesRequested.poll();
+            DelayQueue<Piece> piecesRequested = bitfieldValue.fetchDelayInQueue();
+            Piece expiredPieceIndex = piecesRequested.poll();
 
             while (true) {
-//                if (Objects.isNull(expiredPieceIndex)) {
-//                    break;
-//                }
+                if (Objects.isNull(expiredPieceIndex)) {
+                    break;
+                }
 
-//                bitfield.removeTimedOutPieceIndex(expiredPieceIndex.getCurrIndex());
+                bitfieldValue.removeTimedOutPiece(expiredPieceIndex.getCurrIndex());
 
                 for (Map.Entry<Integer, BitSet> entry : peerNode.getPeerBitfields().entrySet()) {
                     BitSet bitset = entry.getValue();
-//                    if (bitset.get(expiredPieceIndex.getIndex())) {
-//                        TorrentService ep = peerNode.getPeerTorrentService(entry.getKey());
-//                        ep.pingNeighborWithMessage(ConstantFields.MessageForm.INTERESTED);
-//                    }
+                    if (bitset.get(expiredPieceIndex.getCurrIndex())) {
+                        TorrentService ep = peerNode.getPeerTorrentService(entry.getKey());
+                        ep.pingNeighborWithMessage(ConstantFields.MessageForm.INTERESTED);
+                    }
                 }
-//                expiredPieceIndex = piecesRequested.poll();
+                expiredPieceIndex = piecesRequested.poll();
             }
         } catch (Exception e) {
             e.printStackTrace();
