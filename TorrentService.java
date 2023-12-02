@@ -69,7 +69,7 @@ public class TorrentService implements Runnable {
     @Override
     public void run() {
         // begin the handshake if we know both of the service's peerIds.
-        if (this.peerNode1 != this.peerNode2) {
+        if (this.peerNode1Id != this.peerNode2Id) {
             try {
                 startHandshake();
                 this.startedHandshake = true;
@@ -303,8 +303,8 @@ public class TorrentService implements Runnable {
 
     private void handshakeReceival() throws Exception {
         byte[] responseData = inputChannel.readNBytes(ConstantFields.HEADER_LENGTH);
-        String responseHeader = getResponseHeader(responseData);
-        int peerNode2Id = byteArrToInteger(responseData);
+        String responseHeader = new String(Arrays.copyOfRange(responseData, ConstantFields.HEADER_FRONT, ConstantFields.HEADER_FRONT + ConstantFields.HEADER_FIELD), StandardCharsets.UTF_8);
+        int peerNode2Id = byteArrToInteger(Arrays.copyOfRange(responseData, ConstantFields.PEER_ID_FRONT, ConstantFields.PEER_ID_FRONT + ConstantFields.PEER_ID_FIELD));
         // Check if the handshake response message has correct header
         if (!responseHeader.equals(ConstantFields.HEADER)) {
             // Invalid hanshake response message header
@@ -328,8 +328,10 @@ public class TorrentService implements Runnable {
         return new String(Arrays.copyOfRange(responseData, ConstantFields.HEADER_FRONT, ConstantFields.HEADER_FRONT + ConstantFields.HEADER_FIELD), StandardCharsets.UTF_8);
     }
 
-    public static int byteArrToInteger(byte[] responseData) {
-        return ByteBuffer.wrap(Arrays.copyOfRange(responseData, ConstantFields.PEER_ID_FRONT, ConstantFields.PEER_ID_FRONT + ConstantFields.PEER_ID_FIELD)).getInt();
+    public static int byteArrToInteger(byte[] byteArr) {
+        return ByteBuffer.wrap(byteArr).getInt();
+
+//        return ByteBuffer.wrap(Arrays.copyOfRange(responseData, ConstantFields.PEER_ID_FRONT, ConstantFields.PEER_ID_FRONT + ConstantFields.PEER_ID_FIELD)).getInt();
     }
 
     // performs handshake
@@ -343,7 +345,7 @@ public class TorrentService implements Runnable {
         for (int i=0; i<10; i++) {
             msg[ctr++] = 0;
         }
-        mergeSecondToFirstArr(msg, integerToByteArray(peerId), ctr);
+        ctr = mergeSecondToFirstArr(msg, integerToByteArray(peerId), ctr);
         return msg;
     }
 
@@ -377,19 +379,14 @@ public class TorrentService implements Runnable {
     // gets the message
     public static byte[] getMessageText(ConstantFields.MessageForm messageType, byte[] messageContentPayload) {
         int messageTextLength = messageContentPayload != null ? messageContentPayload.length : 0;
-        byte[] messageData = getNewByte(messageTextLength);
-        int messageCounter = combineMsg2InMsg1(messageData, convertIntegerToByteCollection(messageTextLength), 0);
+        byte[] messageData = new byte[ConstantFields.MESSAGE_LENGTH_FIELD_INDEX + ConstantFields.MESSAGE_TYPE_FIELD_INDEX + messageTextLength];
+        int messageCounter = mergeSecondToFirstArr(messageData, convertIntegerToByteCollection(messageTextLength), 0);
         messageCounter = messageCounter+1;
         messageData[messageCounter] = (byte) messageType.getMessageVal();
-        if (checkIfMessageLengthIsValid(messageTextLength)) {
-            combineMsg2InMsg1(messageData, messageContentPayload, messageCounter);
+        if (messageTextLength > 0) {
+            mergeSecondToFirstArr(messageData, messageContentPayload, messageCounter);
         }
         return messageData;
-    }
-
-    //combines message length index, message type index and message size to a byte array
-    private static byte[] getNewByte(int messageTextLength) {
-        return new byte[ConstantFields.MESSAGE_LENGTH_FIELD_INDEX + ConstantFields.MESSAGE_TYPE_FIELD_INDEX + messageTextLength];
     }
 
     //valiate the message length

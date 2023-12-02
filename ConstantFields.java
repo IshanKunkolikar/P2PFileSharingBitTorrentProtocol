@@ -7,22 +7,22 @@ import java.util.Iterator;
 public class ConstantFields {
 
     //defines the constants for the peer block
-    public static final int HEADER_LENGTH = 32;
-    public static final String HEADER = "P2PFileSharingBitTorrentProtocol";
-    public static final int HEADER_FRONT = 0;
-    public static final int HEADER_FIELD = 18;
-    public static final int PEER_ZERO_BITS_FIELD = 10;
-    public static final int PEER_ID_FIELD = 4;
-    public static final int PEER_ZERO_BITS_FRONT = 10;
-    public static final int PEER_ID_FRONT = 28;
+    public static final Integer HEADER_LENGTH = 32;
+    public static final String HEADER = "P2PFILESHARINGPROJ";
+    public static final Integer HEADER_FRONT = 0;
+    public static final Integer HEADER_FIELD = 18;
+    public static final Integer PEER_ZERO_BITS_FIELD = 10;
+    public static final Integer PEER_ID_FIELD = 4;
+    public static final Integer PEER_ZERO_BITS_FRONT = 10;
+    public static final Integer PEER_ID_FRONT = 28;
 
-    public static final int MESSAGE_LENGTH_FRONT_INDEX = 0;
-    public static final int MESSAGE_LENGTH_FIELD_INDEX = 4;
-    public static final int MESSAGE_TYPE_FRONT_INDEX = 4;
-    public static final int MESSAGE_TYPE_FIELD_INDEX = 1;
+    public static final Integer MESSAGE_LENGTH_FRONT_INDEX = 0;
+    public static final Integer MESSAGE_LENGTH_FIELD_INDEX = 4;
+    public static final Integer MESSAGE_TYPE_FRONT_INDEX = 4;
+    public static final Integer MESSAGE_TYPE_FIELD_INDEX = 1;
 
-    public static final int PIECE_FRONT = 0;
-    public static final int PIECE_INDEX = 4;
+    public static final Integer PIECE_FRONT = 0;
+    public static final Integer PIECE_INDEX = 4;
 
     public static final String WORKING_LOC = System.getProperty("user.dir");
 

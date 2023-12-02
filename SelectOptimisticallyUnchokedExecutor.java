@@ -47,27 +47,27 @@ public class SelectOptimisticallyUnchokedExecutor implements Runnable {
     }
 
     //checks the chokedPeerNodes and set them as unchoked
-    public void confirmUnchokedPeer(List<Integer> chokedPeerNodes , int optimistic)
-    {
-        try {
-            //  checking if the nodes exist and replacing if necessary
-            while(optimistic < 0)
-            {
-                optimistic = ChooseUnchokedPeer(chokedPeerNodes);
-            }
-            setUnchokedNode(optimistic);
-
-        } catch (Exception excep) {
-            excep.printStackTrace();
-        }
-    }
+//    public void confirmUnchokedPeer(List<Integer> chokedPeerNodes , int optimistic)
+//    {
+//        try {
+//            //  checking if the nodes exist and replacing if necessary
+//            while(optimistic < 0)
+//            {
+//                optimistic = ChooseUnchokedPeer(chokedPeerNodes);
+//            }
+//            setUnchokedNode(optimistic);
+//
+//        } catch (Exception excep) {
+//            excep.printStackTrace();
+//        }
+//    }
 
     //sets the optimistic node as unchoked
-    public void setUnchokedNode(int optimistic){
-        // get torrent service from the optimistic neighbour
-        TorrentService TorrentService = peerNode.getPeerTorrentService(optimistic);
-        TorrentService.pingNeighborWithMessage(ConstantFields.MessageForm.UNCHOKE);
-    }
+//    public void setUnchokedNode(int optimistic){
+//        // get torrent service from the optimistic neighbour
+//        TorrentService TorrentService = peerNode.getPeerTorrentService(optimistic);
+//        TorrentService.pingNeighborWithMessage(ConstantFields.MessageForm.UNCHOKE);
+//    }
 
     @Override
     public void run() {

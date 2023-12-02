@@ -174,7 +174,7 @@ public class PeerProcess {
             excep.printStackTrace();
         }
 
-        PeerProcess.initializePeerAndSchedulers(peerId, peerMap, commonConfig);
+//        PeerProcess.initializePeerAndSchedulers(peerId, peerMap, commonConfig);
 
         ExecutorService executorService = Executors.newFixedThreadPool(8);
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(8);
