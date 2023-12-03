@@ -274,7 +274,7 @@ public class PeerNode {
                     PeerNode.this.fixedThreadPoolExecutor.execute(new TorrentService(peerId, PeerNode.this, socket, PeerNode.this.fixedThreadPoolExecutor, PeerNode.this.scheduledThreadPoolExecutor, PeerNode.this.bitValues, PeerNode.this.fileValuePieces));
                 }
             } catch (Exception excep) {
-                 excep.printStackTrace();
+                //  excep.printStackTrace();
             }
 
         }

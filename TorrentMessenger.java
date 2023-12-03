@@ -22,7 +22,7 @@ public class TorrentMessenger implements Runnable {
                 outputChannel.write(this.messageContent);
             }
         } catch (Exception excep){
-            excep.printStackTrace();
+            // excep.printStackTrace();
         }
     }
 }

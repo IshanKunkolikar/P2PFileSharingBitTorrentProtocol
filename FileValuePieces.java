@@ -101,7 +101,7 @@ public class FileValuePieces {
         try {
             if (Files.exists(Paths.get(piecesLocationPath))) {
                 discardFolder(piecesLocationPath);
-                Files.delete(Paths.get(piecesLocationPath));
+                // Files.delete(Paths.get(piecesLocationPath));
             }
         } catch (Exception excep) {
             excep.printStackTrace();

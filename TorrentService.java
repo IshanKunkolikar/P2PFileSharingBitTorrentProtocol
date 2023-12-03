@@ -66,80 +66,15 @@ public class TorrentService implements Runnable {
         this.outputChannel = this.torrentSocket.getOutputStream();
     }
 
-    @Override
-    public void run() {
-        // begin the handshake if we know both of the service's peerIds.
-        if (this.peerNode1Id != this.peerNode2Id) {
-            try {
-                startHandshake();
-                this.startedHandshake = true;
-            } catch (Exception excep) {
-                excep.printStackTrace();
-            }
-        }
-        // Receive handshake
-        try {
-            handshakeReceival();
-        } catch (Exception excep) {
-            excep.printStackTrace();
-        }
-        // Send bitfield message
-        sendBitfield();
-        peerNode1.addPeerTorrentService(peerNode2Id, this);
-        // listen to other incoming requests or messages
-        try {
-            while (true) {
-                byte[] messageHeaders = inputChannel.readNBytes(5);
-                if (messageHeaders.length > 0) {
-                    int messageSize = byteArrToInteger(Arrays.copyOfRange(messageHeaders, ConstantFields.MESSAGE_LENGTH_FRONT_INDEX, ConstantFields.MESSAGE_LENGTH_FRONT_INDEX + ConstantFields.MESSAGE_LENGTH_FIELD_INDEX));
-                    ConstantFields.MessageForm messageType = ConstantFields.MessageForm.getMessageFormByValue((int) messageHeaders[ConstantFields.MESSAGE_TYPE_FRONT_INDEX]);
-                    if (messageType != null) {
-                        switch (messageType) {
-                            case CHOKE:
-                                handleChoke();
-                                break;
-                            case UNCHOKE:
-                                handleUnchoke();
-                                break;
-                            case INTERESTED:
-                                handleInterested();
-                                break;
-                            case NOT_INTERESTED:
-                                handleNotInterested();
-                                break;
-                            case HAVE:
-                                handleHave(messageSize);
-                                break;
-                            case BITFIELD:
-                                handleBitfield(messageSize);
-                                break;
-                            case REQUEST:
-                                handleRequest(messageSize);
-                                break;
-                            case PIECE:
-                                handlePiece(messageSize);
-                                break;
-                            case COMPLETED:
-                                handleCompleted();
-                                break;
-                        }
-                    }
-                }
-            }
-        } catch (Exception excep) {
-             excep.printStackTrace();
-        }
-    }
-
     //handles COMPLETE
     private void handleCompleted() throws IOException {
-        this.peerNode1.addCompletedPeer(peerNode2Id);
+        this.peerNode1.addCompletedPeer(this.peerNode2Id);
         if (peerNode1.allPeersComplete()) {
             this.fileValuePieces.discardPiecesFolder();
             this.fixedThreadPoolExecutor.shutdownNow();
             this.scheduledThreadPoolExecutor.shutdown();
             peerNode1.getPeerNodeServer().getServerNodeSocket().close();
-            peerNode1.closeSocketNode(peerNode2Id);
+            peerNode1.closeSocketNode(this.peerNode2Id);
         }
     }
 
@@ -167,16 +102,19 @@ public class TorrentService implements Runnable {
     }
 
     // handles broadcasting on complete file receival
+    // ----------------- CODE IS BREAKING HERE -------------------
+    // ------------ HANDLE TERMINATION ----------------------
     private void broadcastCompleted() throws IOException {
         for (TorrentService torrentService : this.peerNode1.getPeerTorrentService().values()) {
             fixedThreadPoolExecutor.execute(new TorrentMessenger(torrentService.outputChannel, getMessageText(ConstantFields.MessageForm.COMPLETED, null)));
         }
+        
         if (peerNode1.allPeersComplete()) {
             this.fileValuePieces.discardPiecesFolder();
             this.fixedThreadPoolExecutor.shutdownNow();
             this.scheduledThreadPoolExecutor.shutdown();
             peerNode1.getPeerNodeServer().getServerNodeSocket().close();
-            peerNode1.closeSocketNode(peerNode2Id);
+            peerNode1.closeSocketNode(this.peerNode2Id);
         }
     }
 
@@ -247,13 +185,13 @@ public class TorrentService implements Runnable {
     // handles NOTINTERESTED message
     private void handleNotInterested() {
         LOGGER.info("{}: Peer {} received the 'not interested' message from {}", fetchCurrTime(), this.peerNode1Id, this.peerNode2Id);
-        this.peerNode1.removeInterestedNeighboringPeers(peerNode2Id);
+        this.peerNode1.removeInterestedNeighboringPeers(this.peerNode2Id);
     }
 
     // handles INTEREDTED message
     private void handleInterested() {
         LOGGER.info("{}: Peer {} received the 'interested' message from {}", fetchCurrTime(), this.peerNode1Id, this.peerNode2Id);
-        this.peerNode1.insertInterestedNeighboringPeers(peerNode2Id);
+        this.peerNode1.insertInterestedNeighboringPeers(this.peerNode2Id);
     }
 
     // handles CHOKE message
@@ -304,21 +242,21 @@ public class TorrentService implements Runnable {
     private void handshakeReceival() throws Exception {
         byte[] responseData = inputChannel.readNBytes(ConstantFields.HEADER_LENGTH);
         String responseHeader = new String(Arrays.copyOfRange(responseData, ConstantFields.HEADER_FRONT, ConstantFields.HEADER_FRONT + ConstantFields.HEADER_FIELD), StandardCharsets.UTF_8);
-        int peerNode2Id = byteArrToInteger(Arrays.copyOfRange(responseData, ConstantFields.PEER_ID_FRONT, ConstantFields.PEER_ID_FRONT + ConstantFields.PEER_ID_FIELD));
+        int peerNode2IdVal = byteArrToInteger(Arrays.copyOfRange(responseData, ConstantFields.PEER_ID_FRONT, ConstantFields.PEER_ID_FRONT + ConstantFields.PEER_ID_FIELD));
         // Check if the handshake response message has correct header
         if (!responseHeader.equals(ConstantFields.HEADER)) {
             // Invalid hanshake response message header
-            throw new IllegalArgumentException(String.format("Peer %d received invalid handshake message header (%s) from %d", responseHeader, peerNode2Id));
+            throw new IllegalArgumentException(String.format("Peer %d received invalid handshake message header (%s) from %d", responseHeader, peerNode2IdVal));
         }
         if (this.startedHandshake) {
             // validating if the peer id in response is correct
-            if (peerNode2Id != this.peerNode2Id) {
-                throw new IllegalArgumentException(String.format("Peer %d received invalid peer id (%d) in the handshake response", peerNode1Id, peerNode2Id));
+            if (peerNode2IdVal != this.peerNode2Id) {
+                throw new IllegalArgumentException(String.format("Peer %d received invalid peer id (%d) in the handshake response", peerNode1Id, peerNode2IdVal));
             }
             LOGGER.info("{}: Peer {} makes a connection to Peer {}", fetchCurrTime(), this.peerNode1Id, this.peerNode2Id);
         } else {
             // Update peerNode2Id with received peerNode2Id
-            this.peerNode2Id = peerNode2Id;
+            this.peerNode2Id = peerNode2IdVal;
             startHandshake();
             LOGGER.info("{}: Peer {} is connected from Peer {}", fetchCurrTime(), this.peerNode1Id, this.peerNode2Id);
         }
@@ -409,4 +347,71 @@ public class TorrentService implements Runnable {
     public static String fetchCurrTime() {
         return DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss").format(LocalDateTime.now());
     }
+
+
+    @Override
+    public void run() {
+        // begin the handshake if we know both of the service's peerIds.
+        if (this.peerNode2Id!=0 && this.peerNode1Id != this.peerNode2Id) {
+            try {
+                startHandshake();
+                this.startedHandshake = true;
+            } catch (Exception excep) {
+                excep.printStackTrace();
+            }
+        }
+        // Receive handshake
+        try {
+            handshakeReceival();
+        } catch (Exception excep) {
+            excep.printStackTrace();
+        }
+        // Send bitfield message
+        sendBitfield();
+        peerNode1.addPeerTorrentService(this.peerNode2Id, this);
+        // listen to other incoming requests or messages
+        try {
+            while (true) {
+                byte[] messageHeaders = inputChannel.readNBytes(5);
+                if (messageHeaders.length > 0) {
+                    int messageSize = byteArrToInteger(Arrays.copyOfRange(messageHeaders, ConstantFields.MESSAGE_LENGTH_FRONT_INDEX, ConstantFields.MESSAGE_LENGTH_FRONT_INDEX + ConstantFields.MESSAGE_LENGTH_FIELD_INDEX));
+                    ConstantFields.MessageForm messageType = ConstantFields.MessageForm.getMessageFormByValue((int) messageHeaders[ConstantFields.MESSAGE_TYPE_FRONT_INDEX]);
+                    if (messageType != null) {
+                        switch (messageType) {
+                            case CHOKE:
+                                handleChoke();
+                                break;
+                            case UNCHOKE:
+                                handleUnchoke();
+                                break;
+                            case INTERESTED:
+                                handleInterested();
+                                break;
+                            case NOT_INTERESTED:
+                                handleNotInterested();
+                                break;
+                            case HAVE:
+                                handleHave(messageSize);
+                                break;
+                            case BITFIELD:
+                                handleBitfield(messageSize);
+                                break;
+                            case REQUEST:
+                                handleRequest(messageSize);
+                                break;
+                            case PIECE:
+                                handlePiece(messageSize);
+                                break;
+                            case COMPLETED:
+                                handleCompleted();
+                                break;
+                        }
+                    }
+                }
+            }
+        } catch (Exception excep) {
+            //  excep.printStackTrace();
+        }
+    }
+
 }
