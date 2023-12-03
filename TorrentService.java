@@ -381,8 +381,7 @@ public class TorrentService implements Runnable {
         int messageTextLength = messageContentPayload != null ? messageContentPayload.length : 0;
         byte[] messageData = new byte[ConstantFields.MESSAGE_LENGTH_FIELD_INDEX + ConstantFields.MESSAGE_TYPE_FIELD_INDEX + messageTextLength];
         int messageCounter = mergeSecondToFirstArr(messageData, convertIntegerToByteCollection(messageTextLength), 0);
-        messageCounter = messageCounter+1;
-        messageData[messageCounter] = (byte) messageType.getMessageVal();
+        messageData[messageCounter++] = (byte) messageType.getMessageVal();
         if (messageTextLength > 0) {
             mergeSecondToFirstArr(messageData, messageContentPayload, messageCounter);
         }
