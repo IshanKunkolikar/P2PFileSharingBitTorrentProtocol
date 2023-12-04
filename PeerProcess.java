@@ -84,12 +84,12 @@ public class PeerProcess {
     //parsing the peer config data line by line and adding it to the map
     public static void parsePeerLine(String line) {
         String[] values = line.split(" ");
-        addPeerInfo(Integer.parseInt(values[0]), Integer.parseInt(values[1]) == 1, Integer.parseInt(values[2]), values[3]);
+        addPeerInfo(Integer.parseInt(values[2]), Integer.parseInt(values[3]) == 1, Integer.parseInt(values[0]), values[1]);
     }
 
     //parsing the config data from the peer config file
     public static void parsePeerData(List<String> configLines) {
-        LOGGER.info("Peer Configuration:~");
+        LOGGER.info("Peer Config:");
         for (String line : configLines) {
             parsePeerLine(line);
         }
@@ -139,7 +139,6 @@ public class PeerProcess {
         ExecutorService fixedThreadPoolExecutor = createFixedThreadPool(8);
         ScheduledExecutorService scheduledThreadPoolExecutor = createScheduledThreadPool(8);
         PeerNode peerNode = new PeerNode(peerId, dataCommonCfg, dataPeerCfg, fixedThreadPoolExecutor, scheduledThreadPoolExecutor, dataCommonCfg.getPrefNeighborsCount());
-        System.out.println("peerNode--"+peerNode+" peerId--"+peerId);
         scheduledThreadPoolExecutor.scheduleAtFixedRate(new SelectPreferredNeighborExecutor(peerId, peerNode), 0L, dataCommonCfg.getUnchokingTime(), TimeUnit.SECONDS);
         scheduledThreadPoolExecutor.scheduleAtFixedRate(new SelectOptimisticallyUnchokedExecutor(peerId, peerNode, dataPeerCfg), 0L, dataCommonCfg.getOptUnchokingTime(), TimeUnit.SECONDS);
         scheduledThreadPoolExecutor.scheduleAtFixedRate(new HandlePiecesRequestedScheduler(peerNode), 0L, 30, TimeUnit.SECONDS);

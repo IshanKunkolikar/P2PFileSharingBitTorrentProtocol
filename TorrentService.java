@@ -75,6 +75,7 @@ public class TorrentService implements Runnable {
             this.scheduledThreadPoolExecutor.shutdown();
             peerNode1.getPeerNodeServer().getServerNodeSocket().close();
             peerNode1.closeSocketNode(this.peerNode2Id);
+            LOGGER.info("{}: Peer {} has downloaded the file and terminated", fetchCurrTime(), this.peerNode1Id);
         }
     }
 

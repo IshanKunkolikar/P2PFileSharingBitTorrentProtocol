@@ -104,7 +104,7 @@ public class CommonConfig {
     }
 
     public void printCommonConfig(){
-        LOGGER.info("\nCommon Info Configuration:~");
+        LOGGER.info("\nCommon Config:");
 
         LOGGER.info("Number of Preferred Neighbors: {}", getPrefNeighborsCount());
         LOGGER.info("Unchoking Interval: {}", getUnchokingTime());

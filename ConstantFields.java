@@ -8,7 +8,7 @@ public class ConstantFields {
 
     //defines the constants for the peer block
     public static final Integer HEADER_LENGTH = 32;
-    public static final String HEADER = "P2PFILESHARINGPROJ";
+    public static final String HEADER = "P2PBITTORRENTFILES";
     public static final Integer HEADER_FRONT = 0;
     public static final Integer HEADER_FIELD = 18;
     public static final Integer PEER_ZERO_BITS_FIELD = 10;
